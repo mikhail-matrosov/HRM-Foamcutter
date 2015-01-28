@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
+#include <AccelStepper.h>
 //#include "utility/Adafruit_PWMServoDriver.h"
 
 // by definition of communications we have 4 integers for coordinates 7 bytes each
@@ -15,7 +16,7 @@ const int BytesInNumber = 7; // why 7?
 
 // section of motors' coordinates defines
 long currentCoordinates[NumberOfCoordinates] = {};
-const int MotorsCount = 2; //TODO will be NumberOfCoordinates
+const int MotorsCount = 1; //TODO will be NumberOfCoordinates
 
 // motors instantiation
 // motor shield object with the default I2C address
@@ -26,11 +27,18 @@ Adafruit_MotorShield AdaShields[] = {
 
 // Connect a stepper motors with 200 steps per revolution (1.8 degree)
 Adafruit_StepperMotor* Motors[NumberOfCoordinates] = {
-	AdaShields[PLANE_0].getStepper(200, 1), // to motor port #1 (M1 and M2)
-	AdaShields[PLANE_0].getStepper(200, 2) // and to motor port #2 (M3 and M4)
+	AdaShields[PLANE_0].getStepper(200, 2) // to motor port #1 (M1 and M2)
+	//AdaShields[PLANE_0].getStepper(200, 2) // and to motor port #2 (M3 and M4)
 	//TODO motors for second plane
 };
 
+void forwardstep1() {
+	Motors[0]->onestep(FORWARD, SINGLE);
+}
+void backwardstep1() {
+	Motors[0]->onestep(BACKWARD, SINGLE);
+}
+AccelStepper stepperX(forwardstep1, backwardstep1);
 void setup() {
 	Serial.begin(9600);           // set up Serial library at 9600 bps
 	// setup state
@@ -127,7 +135,10 @@ void loop()
 		// move each motor
 		for (int i = 0; i < MotorsCount; ++i) {
 			// change one coordinate by one exact motor
-			move(Motors[i], currentCoordinates[i], newCoordinates[i]);
+			stepperX.move(newCoordinates[i] - currentCoordinates[i]);
+			while (stepperX.distanceToGo() > 0) {
+				stepperX.run();
+			}
 			currentCoordinates[i] = newCoordinates[i];
 		}
 	}
