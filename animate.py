@@ -22,7 +22,7 @@ def goto(v):
         # wait for positive response
         while (status == None) :
             status = ser.readline()
-        if (status[0]!='!') : # means message received
+        if (len(status) > 0 and status[0]!='!') : # means message received
             break
         
     # parse status line
