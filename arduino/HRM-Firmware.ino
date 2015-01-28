@@ -52,6 +52,10 @@ int fillOneSeries(unsigned int *coordinates, unsigned int sz)
 			coordinates[i] = coordinates[i] * 10 + int(char(tmp) - '0');
 		}
 	}
+	if (char(Serial.read()) != '~') {
+		Serial.println("Error: no tilda at the end");
+		return -1;
+	}
 	return 0;
 }
 
@@ -61,12 +65,12 @@ void loop()
 	while (fillOneSeries(coordinates, NumberOfCoordinates) >= 0) {
 		// test purposes: print out the result
 		for (int i = 0; i < NumberOfCoordinates; ++i) {
-			Serial.print("X");
+			Serial.print(" X");
 			Serial.print(i + 1);
 			Serial.print("= ");
-			Serial.println(coordinates[i]);
-			Serial.println("========");
+			Serial.print(coordinates[i]);
 		}
+		Serial.println("");
 		// clean up values
 		for (int i = 0; i < NumberOfCoordinates; ++i)
 			coordinates[i] = 0;
