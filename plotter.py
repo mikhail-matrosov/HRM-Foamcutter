@@ -33,6 +33,6 @@ def plot_from_file(INPUT_FILE, drawJumps=1):
     img = drawPath(img, data[1], 1, drawJumps)
     
     cv2.imwrite(INPUT_FILE+'_p.png', img)
-    cv2.imshow('result', img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.imshow('result', img)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()

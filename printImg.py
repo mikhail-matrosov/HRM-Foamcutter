@@ -15,4 +15,4 @@ inputImagePath = tkFileDialog.askopenfilename()
 fname = main(inputImagePath)
 
 print 'Now printing.'
-#animate(fname, comPort='COM7')
+animate(fname, comPort='COM19')

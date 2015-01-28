@@ -1,10 +1,32 @@
 import serial
+import time
 import numpy as np
 
 scale = 1
 
 def goto(v):
-    ser.write('G%07d%07d%07d%07d~' % (v[0], v[1], v[2], v[3]))
+    # prepare command
+    if len(v) == 4 :
+        cmd = ('G%07d%07d%07d%07d~' % (v[0], v[1], v[2], v[3]))
+    else :
+        cmd = ('G%07d%07d%07d%07d~' % (v[0], v[1], v[0], v[1]))
+    print cmd
+    
+    status = None
+    while True:
+        ser.flushInput()
+        
+        # send command
+        ser.write(cmd)
+        
+        # wait for positive response
+        while (status == None) :
+            status = ser.readline()
+        if (status[0]!='!') : # means message received
+            break
+        
+    # parse status line
+    print status
     
 ser = None
 def connect(comPort):
@@ -16,7 +38,7 @@ def connect(comPort):
         pass
     
     ser = serial.Serial(comPort, baudrate=9600)
-    ser.setTimeout(0)
+    ser.setTimeout(1)
         
     print ser.name
 
