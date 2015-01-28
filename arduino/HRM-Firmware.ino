@@ -38,6 +38,8 @@ void setup() {
 	for (int i = 0; i < NumberOfCoordinates; ++i) {
 		currentCoordinates[i] = 0;
 	}
+	AdaShields[PLANE_0].begin();
+	//TODO second one
 	Serial.println("Ready for work");
 }
 
@@ -46,16 +48,16 @@ void halt()
 	// do nothing
 	for (;;) {}
 }
-int fillOneSeries(unsigned long *coordinates, unsigned int sz)
+int fillCoordinates(unsigned long *coordinates, unsigned int sz)
 {
 	assert(sz == NumberOfCoordinates);
 	// first symbol should be 'G'
 	int tmp = Serial.read();
 	if (tmp < 0) {
-		Serial.println("Error: can't read from serial port");
+		Serial.println("!Error: can't read from serial port");
 		return -1;
 	} else if (char(tmp) != 'G') {
-		Serial.print("Error: G should be first, not ");
+		Serial.print("!Error: G should be first, not ");
 		Serial.println(char(tmp));
 		return -1;
 	}
@@ -65,7 +67,7 @@ int fillOneSeries(unsigned long *coordinates, unsigned int sz)
 		for (int j = 0; j < BytesInNumber; ++j) {
 			tmp = Serial.read();
 			if (tmp < 0) {
-				Serial.print("Error: no data found ");
+				Serial.print("!Error: no data found ");
 				Serial.print(i + 1);
 				Serial.print(" ");
 				Serial.print(j + 1);
@@ -76,7 +78,7 @@ int fillOneSeries(unsigned long *coordinates, unsigned int sz)
 		}
 	}
 	if (char(Serial.read()) != '~') {
-		Serial.println("Error: no tilda at the end");
+		Serial.println("!Error: no tilda at the end");
 		return -1;
 	}
 	return 0;
@@ -85,7 +87,7 @@ int fillOneSeries(unsigned long *coordinates, unsigned int sz)
 void testInput()
 {
 	unsigned long coordinates[NumberOfCoordinates] = {};
-	while (fillOneSeries(coordinates, NumberOfCoordinates) >= 0) {
+	while (fillCoordinates(coordinates, NumberOfCoordinates) >= 0) {
 		// test purposes: print out the result
 		for (int i = 0; i < NumberOfCoordinates; ++i) {
 			Serial.print(" X");
@@ -103,7 +105,6 @@ void testInput()
 // function for movement from point A to point B in desired direction 
 void move(Adafruit_StepperMotor *motor, unsigned long prev, unsigned long next)
 {
-
 	//TODO
 }
 
@@ -111,19 +112,38 @@ void loop()
 {
 	// wait for serial input of coordinates: G-byte and NumberOfCoordinates * BytesInNumber and tilda
 	if (Serial.available() < NumberOfCoordinates * BytesInNumber + 2) {
-		Serial.println("not enough input");
+		Serial.println("!not enough input");
 		delay(1000);
 		return;
 	}
-	// read the incoming coordinates
-	unsigned long newCoordinates[NumberOfCoordinates] = {};
-	if (fillOneSeries(newCoordinates, NumberOfCoordinates) < 0)
+	// check the type of incoming command
+	int ctype = Serial.peek();
+	// TODO refactor if into switch or (better) call functions by f-pointers
+	if (ctype == int('G')) {
+		// read the incoming coordinates
+		unsigned long newCoordinates[NumberOfCoordinates] = {};
+		if (fillCoordinates(newCoordinates, NumberOfCoordinates) < 0)
+			return;
+		// move each motor
+		for (int i = 0; i < MotorsCount; ++i) {
+			// change one coordinate by one exact motor
+			move(Motors[i], currentCoordinates[i], newCoordinates[i]);
+			currentCoordinates[i] = newCoordinates[i];
+		}
+	}
+	else if (ctype == int('H')) {
+		//TODO go home to 0,0
+		// ....
+	} else if (ctype == int('T')) {
+		//TODO set temperature
+		// .....
+	} else if (ctype == int('R')) {
+		// TODO release motors
+		// .....
+	} else {
+		Serial.print("!Error: unrecognized command type ");
+		Serial.println(char(ctype));
 		return;
-	// move each motor
-	for (int i = 0; i < MotorsCount; ++i) {
-		// change one coordinate by one exact motor
-		move(Motors[i], currentCoordinates[i], newCoordinates[i]);
-		currentCoordinates[i] = newCoordinates[i];
 	}
 	Serial.println("Success");
 }
